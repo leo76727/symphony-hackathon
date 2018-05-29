@@ -1,0 +1,42 @@
+server:
+  applicationConnectors:
+    - type: http
+      port: 7070
+    - type: https
+      port: 8443
+      keyStorePath: C:/dev/symph-hack/todo-bot/src/main/resources/ssl/bot.user118.p12
+      keyStorePassword: changeit
+      validateCerts: false
+  adminConnectors:
+    - type: http
+      port: 7071
+logging:
+  level: INFO
+  loggers:
+    com.symphony.hackathon.gs3.bot.TodoBot: DEBUG
+    org.hibernate.SQL:
+      level: DEBUG
+  appenders:
+    - type: console
+    - type: file
+      threshold: INFO
+      logFormat: "%-6level [%d{HH:mm:ss.SSS}] [%t] %logger{5} - %X{code} %msg %n"
+      currentLogFilename: /tmp/application.log
+      archivedLogFilenamePattern: /tmp/application-%d{yyyy-MM-dd}-%i.log.gz
+      archivedFileCount: 7
+      timeZone: UTC
+      maxFileSize: 10MB
+
+#ONLY EDIT THIS SECTION FOR SYMPHONY CONFIG
+botUser: bot.user118
+sessionAuthURL: https://develop2-api.symphony.com:8444/sessionauth
+keyAuthUrl: https://develop2-api.symphony.com:8444/keyauth
+localKeystorePath: C:/dev/symph-hack/todo-bot/src/main/resources/ssl/bot.user118.p12
+localKeystorePassword: changeit
+botCertPath: C:/dev/symph-hack/todo-bot/src/main/resources/ssl/bot.user118.p12
+botCertPassword: changeit
+botEmailAddress: bot.user118
+agentAPIEndpoint: https://develop2.symphony.com/agent
+podAPIEndpoint: https://develop2.symphony.com/pod
+
+
