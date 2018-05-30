@@ -1,6 +1,7 @@
 package com.symphony.hackathon.gs3.bot;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.symphony.hackathon.gs3.JsonObjectMapper;
 import com.symphony.hackathon.gs3.TodoBotConfiguration;
 import com.symphony.hackathon.gs3.model.Todo;
 import com.symphony.hackathon.gs3.model.views.TodoEntityWrapper;
@@ -31,7 +32,7 @@ public class TodoBot implements ChatListener, ChatServiceListener, RoomServiceEv
     private RoomService roomService;
     private TodoService todoService;
     TodoBotConfiguration config;
-    private ObjectMapper mapper = Jackson.newObjectMapper();
+    private ObjectMapper mapper = JsonObjectMapper.get();
 
     private static String TASK_TEMPLATE = MessageMLTemplateLoader.load("task");
     private static String TASK_LIST_TEMPLATE = MessageMLTemplateLoader.load("taskList");

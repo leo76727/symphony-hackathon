@@ -28,7 +28,7 @@ public class TodoBotApplication extends Application<TodoBotConfiguration> {
 
     @Override
     public void initialize(Bootstrap<TodoBotConfiguration> bootstrap) {
-        // Enable variable substitution with environment variables
+        bootstrap.setObjectMapper(JsonObjectMapper.get());
         bootstrap.setConfigurationSourceProvider(
                 new SubstitutingSourceProvider(
                         bootstrap.getConfigurationSourceProvider(),

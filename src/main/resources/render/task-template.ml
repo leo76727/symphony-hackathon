@@ -16,8 +16,10 @@
 					<span class="tempo-bg-color--blue tempo-text-color--white tempo-token">
 						${entity['todo'].status?upper_case}
 					</span>
-
-
+                    <#if (entity['todo'].due)??>
+					    <span class="tempo-text-color--secondary">&#160;&#160;&#160;Due:</span>
+                        <span class="tempo-text-color--normal">${entity['todo'].due}</span>
+                    </#if>
 					<#if (entity['todo'].labels)??>
 						<span class="tempo-text-color--secondary">&#160;&#160;&#160;Labels:</span>
 						<#list entity['todo'].labels as label>

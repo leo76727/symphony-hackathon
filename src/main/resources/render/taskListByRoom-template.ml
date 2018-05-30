@@ -18,7 +18,10 @@
 						<span class="tempo-bg-color--blue tempo-text-color--white tempo-token">
 							${todo.status?upper_case}
 						</span>
-
+                        <#if (todo.due)??>
+                            <span class="tempo-text-color--secondary">&#160;&#160;&#160;Due:</span>
+                            <span class="tempo-text-color--normal">${todo.due}</span>
+                        </#if>
 
 						<#if (todo.labels)??>
 							<span class="tempo-text-color--secondary">&#160;&#160;&#160;Labels:</span>

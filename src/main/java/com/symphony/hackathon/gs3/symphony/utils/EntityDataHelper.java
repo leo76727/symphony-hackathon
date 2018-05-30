@@ -2,7 +2,7 @@ package com.symphony.hackathon.gs3.symphony.utils;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.dropwizard.jackson.Jackson;
+import com.symphony.hackathon.gs3.JsonObjectMapper;
 import org.symphonyoss.client.SymphonyClient;
 import org.symphonyoss.symphony.clients.model.SymUser;
 
@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class EntityDataHelper {
-    private static ObjectMapper objectMapper = Jackson.newObjectMapper();
+    private static ObjectMapper objectMapper = JsonObjectMapper.get();
     public static List<SymUser> getUserMentions(String entityData, SymphonyClient client){
         try {
             List<SymUser> mentions = new ArrayList<>();

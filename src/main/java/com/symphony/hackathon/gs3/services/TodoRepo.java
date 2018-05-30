@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.symphony.hackathon.gs3.JsonObjectMapper;
 import com.symphony.hackathon.gs3.model.Todo;
 import io.dropwizard.jackson.Jackson;
 
@@ -18,7 +19,7 @@ import java.util.Map;
 public class TodoRepo {
     String url = "jdbc:sqlite:todo.sqllitedb";
     private static final String INSERT_SQL = "INSERT INTO TODOS(id, json) VALUES (?, ?)";
-    private ObjectMapper mapper = Jackson.newObjectMapper();
+    private ObjectMapper mapper = JsonObjectMapper.get();
     public TodoRepo(){
         try (Connection conn = DriverManager.getConnection(url);
              Statement stmt = conn.createStatement()) {
