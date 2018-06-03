@@ -3,8 +3,11 @@ package com.symphony.hackathon.gs3.services;
 import com.google.common.collect.Lists;
 import com.joestelmach.natty.DateGroup;
 import com.joestelmach.natty.Parser;
+import com.symphony.hackathon.gs3.bot.TodoBot;
 import com.symphony.hackathon.gs3.model.Todo;
 import com.symphony.hackathon.gs3.symphony.utils.EntityDataHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.symphonyoss.client.SymphonyClient;
 import org.symphonyoss.client.exceptions.StreamsException;
 import org.symphonyoss.symphony.clients.model.SymMessage;
@@ -22,8 +25,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class TodoService {
-
-    AtomicLong idGenerator = new AtomicLong(1);
+    private static final Logger logger = LoggerFactory.getLogger(TodoService.class);
+    private final AtomicLong idGenerator = new AtomicLong(1);
 
     private SymphonyClient symClient;
     private Map<Long, Todo> todos = new HashMap<>();
@@ -34,8 +37,16 @@ public class TodoService {
         todos = repo.loadAll();
         idGenerator.set(todos.keySet().stream().mapToLong(l->l).max().orElse(0) + 1 );
     }
-
     public Todo createTask(SymMessage message) throws StreamsException {
+        return createTasks(message, false).get(0);
+    }
+    public List<Todo> createTasks(SymMessage message) throws StreamsException {
+        return createTasks(message, true);
+    }
+
+    public List<Todo> createTasks(SymMessage message, boolean recurring) throws StreamsException {
+
+        List<Todo> result = new ArrayList<>();
 
         String messageText = message.getMessageText();
         Optional<SymUser> assignee = getAssignee(message);
@@ -46,25 +57,36 @@ public class TodoService {
         for(String label : labels){
             messageText = messageText.replace("#" + label,"");
         }
-        LocalDateTime due = getDueDate(messageText);
         String summary = messageText
                 .replace("/task ", "")
+                .replace("/taskr ", "")
                 .replace("@" + assigneeName, "");
 
-        Todo todo = new Todo(
-                idGenerator.getAndIncrement(),
-                summary,
-                message.getSymUser().getDisplayName(),
-                message.getSymUser().getId(),
-                assigneeName,
-                assigneeId,
-                message.getStreamId(),
-                message.getStream().getStreamType() == SymStreamTypes.Type.ROOM ? symClient.getStreamsClient().getRoomDetail(message.getStreamId()).getRoomAttributes().getName() : "Personal",
-                due,
-                labels
-        );
-        save(todo);
-        return todo;
+        List<LocalDateTime> dueDates;
+        if(recurring){
+            dueDates = getDueDates(messageText);
+        } else {
+            dueDates = Lists.newArrayList(getDueDate(messageText));
+        }
+
+        for(LocalDateTime due : dueDates){
+            Todo todo = new Todo(
+                    idGenerator.getAndIncrement(),
+                    summary,
+                    message.getSymUser().getDisplayName(),
+                    message.getSymUser().getId(),
+                    assigneeName,
+                    assigneeId,
+                    message.getStreamId(),
+                    message.getStream().getStreamType() == SymStreamTypes.Type.ROOM ? symClient.getStreamsClient().getRoomDetail(message.getStreamId()).getRoomAttributes().getName() : "Personal",
+                    due,
+                    labels
+            );
+            save(todo);
+            result.add(todo);
+        }
+
+        return result;
     }
 
     public void save(Todo todo){
@@ -109,13 +131,48 @@ public class TodoService {
         Parser parser = new Parser();
         List<DateGroup> groups = parser.parse(text);
         if(groups.size() > 0){
+
             DateGroup dateGroup = groups.get(0);
+            logger.info("Due Date Parsing Matched text: {}", dateGroup.getFullText());
             List<Date> dates = dateGroup.getDates();
             if(dates.size() > 0){
                 return dates.get(0).toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
             }
         }
         return null;
+    }
+
+    private List<LocalDateTime> getDueDates(String text){
+        return parseRecurringDates(text).stream().map(d -> d.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime() ).collect(Collectors.toList());
+    }
+
+
+    private List<Date> parseRecurringDates(String expression){
+        Parser parser = new Parser();
+        List<Date> dates = new ArrayList<>();
+        List<DateGroup> dateGroups = parser.parse(expression);
+
+        if(dateGroups.size() == 0){
+            return dates;
+        }
+
+        DateGroup dateGroup = dateGroups.get(0);
+        dates.addAll(dateGroup.getDates());
+        logger.info("Due Date Parsing Matched text: {}", dateGroup.getFullText());
+
+        if(!dateGroup.isRecurring() || dateGroup.getRecursUntil() == null){
+            return dates;
+        }
+
+        Date recurrsUntil = dateGroup.getRecursUntil();
+        Date maxDate = dates.get(dates.size()-1);
+
+        while (maxDate.before(recurrsUntil)){
+            dateGroup = parser.parse(expression, maxDate).get(0);
+            dates.addAll(dateGroup.getDates());
+            maxDate = dates.get(dates.size()-1);
+        }
+        return dates.stream().filter(d->d.before(recurrsUntil)).collect(Collectors.toList());
     }
 
     private List<String> getLabels(String text){

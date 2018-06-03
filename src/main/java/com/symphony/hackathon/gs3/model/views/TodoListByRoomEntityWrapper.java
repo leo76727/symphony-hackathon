@@ -2,6 +2,8 @@ package com.symphony.hackathon.gs3.model.views;
 
 import com.symphony.hackathon.gs3.model.Todo;
 
+import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -24,7 +26,7 @@ public class TodoListByRoomEntityWrapper {
 
         public RoomList(String roomName, List<Todo> items) {
             this.roomName = roomName;
-            this.items = items;
+            this.items = items.stream().sorted(Comparator.comparing(t -> t.due == null ? LocalDateTime.MAX : t.due)).collect(Collectors.toList());
         }
     }
     public Inner todos;

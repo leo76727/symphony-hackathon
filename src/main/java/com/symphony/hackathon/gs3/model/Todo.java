@@ -16,6 +16,7 @@ public class Todo {
     public List<String> labels;
     public String roomId;
     public String roomName;
+    public boolean reminded;
 
     public Todo() {
     }
@@ -33,5 +34,6 @@ public class Todo {
         this.labels = labels;
         this.status = Status.NEW;
         this.createdAt = LocalDateTime.now();
+        this.reminded = false;
     }
 }

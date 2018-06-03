@@ -22,6 +22,11 @@
             <url>http://oss.sonatype.org/content/repositories/snapshots</url>
             <snapshots><enabled>true</enabled></snapshots>
         </repository>
+            <repository>
+                <id>apexnlp</id>
+                <name>alexnlp</name>
+                <url>http://dl.bintray.com/6thsolution/apexnlp</url>
+            </repository>
     </repositories>
 
     <dependencyManagement>
@@ -111,9 +116,11 @@
         <dependency>
             <groupId>com.joestelmach</groupId>
             <artifactId>natty</artifactId>
-            <version>0.11</version>
+            <version>0.13</version>
         </dependency>
     </dependencies>
+    <distributionManagement></distributionManagement>
+
 
     <build>
         <plugins>

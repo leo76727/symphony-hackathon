@@ -18,7 +18,7 @@ import java.util.Map;
  */
 public class TodoRepo {
     String url = "jdbc:sqlite:todo.sqllitedb";
-    private static final String INSERT_SQL = "INSERT INTO TODOS(id, json) VALUES (?, ?)";
+    private static final String INSERT_SQL = "INSERT OR REPLACE INTO TODOS(id, json) VALUES (?, ?)";
     private ObjectMapper mapper = JsonObjectMapper.get();
     public TodoRepo(){
         try (Connection conn = DriverManager.getConnection(url);
