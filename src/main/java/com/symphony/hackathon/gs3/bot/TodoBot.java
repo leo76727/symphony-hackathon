@@ -18,6 +18,7 @@ import org.symphonyoss.client.services.*;
 import org.symphonyoss.symphony.clients.model.SymMessage;
 import org.symphonyoss.symphony.clients.model.SymStreamTypes;
 
+import java.util.Date;
 import java.util.List;
 
 public class TodoBot implements ChatListener, ChatServiceListener, RoomServiceEventListener, RoomEventListener {
@@ -94,6 +95,9 @@ public class TodoBot implements ChatListener, ChatServiceListener, RoomServiceEv
                     this.messageSender.sendEntityMessage(task.roomId, new TodoEntityWrapper(task, "Created"), SymphonyToDoMessengeSender.TASK_TEMPLATE);
                 }
             }
+            if (messageText.startsWith("/test ")) {
+                this.messageSender.sendEntityMessage(message.getStreamId(), new ExampleTimerEntity(), "<messageML><div class=\"entity\" data-entity-id=\"timer\"><b><i>Please install the Hello World application to render this entity.</i></b></div></messageML>");
+            }
             if (messageText.startsWith("/tasks")) {
                 List<Todo> tasks;
                 if(message.getStream().getStreamType() == SymStreamTypes.Type.ROOM){
@@ -114,6 +118,42 @@ public class TodoBot implements ChatListener, ChatServiceListener, RoomServiceEv
             }
         } catch (Exception e) {
             logger.error("Failed to send message", e);
+        }
+    }
+
+    public static class ExampleTimerEntity{
+        InnerTimer timer;
+        public static class InnerTimer {
+            public String version = "1.0";
+            public String type = "com.symphony.timer";
+
+            public String getVersion() {
+                return version;
+            }
+
+            public void setVersion(String version) {
+                this.version = version;
+            }
+
+            public String getType() {
+                return type;
+            }
+
+            public void setType(String type) {
+                this.type = type;
+            }
+
+        }
+        public ExampleTimerEntity(){
+            this.timer = new InnerTimer();
+        }
+
+        public InnerTimer getTimer() {
+            return timer;
+        }
+
+        public void setTimer(InnerTimer timer) {
+            this.timer = timer;
         }
     }
 
