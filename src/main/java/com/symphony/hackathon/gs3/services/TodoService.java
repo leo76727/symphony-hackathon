@@ -120,11 +120,11 @@ public class TodoService {
     }
 
     public List<Todo> getForRoom(String roomId) {
-        return filtered(t->t.roomId.equals(roomId));
+        return filtered(t->t.roomId.equals(roomId) && t.status != Status.DONE);
     }
 
     public List<Todo> getForAssignee(Long id) {
-        return filtered(t->id.equals(t.assigneeId));
+        return filtered(t->id.equals(t.assigneeId) && t.status != Status.DONE);
     }
 
     public List<Todo> filtered(Predicate<Todo> predicate){
