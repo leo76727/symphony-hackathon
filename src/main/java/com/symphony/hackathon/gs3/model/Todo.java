@@ -16,12 +16,13 @@ public class Todo {
     public List<String> labels;
     public String roomId;
     public String roomName;
+    public int priority;
     public boolean reminded;
 
     public Todo() {
     }
 
-    public Todo(long id, String summary, String creatorName, Long creatorId, String assigneeName, Long assigneeId, String roomId, String roomName, LocalDateTime due, List<String> labels) {
+    public Todo(long id, String summary, String creatorName, Long creatorId, String assigneeName, Long assigneeId, String roomId, String roomName, LocalDateTime due, int priority, List<String> labels) {
         this.id = id;
         this.summary = summary;
         this.creatorName = creatorName;
@@ -34,6 +35,7 @@ public class Todo {
         this.labels = labels;
         this.status = Status.NEW;
         this.createdAt = LocalDateTime.now();
+        this.priority = priority;
         this.reminded = false;
     }
 }

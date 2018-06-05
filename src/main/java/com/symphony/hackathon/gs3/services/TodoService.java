@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import com.joestelmach.natty.DateGroup;
 import com.joestelmach.natty.Parser;
 import com.symphony.hackathon.gs3.bot.TodoBot;
+import com.symphony.hackathon.gs3.model.Status;
 import com.symphony.hackathon.gs3.model.Todo;
 import com.symphony.hackathon.gs3.symphony.utils.EntityDataHelper;
 import org.slf4j.Logger;
@@ -29,8 +30,10 @@ public class TodoService {
     private final AtomicLong idGenerator = new AtomicLong(1);
 
     private SymphonyClient symClient;
-    private Map<Long, Todo> todos = new HashMap<>();
+    private Map<Long, Todo> todos;
     private TodoRepo repo = new TodoRepo();
+    Pattern taskIdPattern = Pattern.compile("\\s*\\/\\S+\\s(?:(?:TODO|TASK)-)?(\\d+).*", Pattern.CASE_INSENSITIVE);
+    Pattern priorityPattern = Pattern.compile(".*p:([123]).*", Pattern.CASE_INSENSITIVE);
 
     public TodoService(SymphonyClient symClient){
         this.symClient = symClient;
@@ -44,7 +47,7 @@ public class TodoService {
         return createTasks(message, true);
     }
 
-    public List<Todo> createTasks(SymMessage message, boolean recurring) throws StreamsException {
+    private List<Todo> createTasks(SymMessage message, boolean recurring) throws StreamsException {
 
         List<Todo> result = new ArrayList<>();
 
@@ -53,6 +56,7 @@ public class TodoService {
         String assigneeName = assignee.map(SymUser::getDisplayName).orElse("Unassigned");
         Long assigneeId = assignee.map(SymUser::getId).orElse(null);
         List<String> labels = getLabels(messageText);
+        int priority = getPriority(message.getMessageText(),2);
         System.out.println(labels);
         for(String label : labels){
             messageText = messageText.replace("#" + label,"");
@@ -60,7 +64,8 @@ public class TodoService {
         String summary = messageText
                 .replace("/task ", "")
                 .replace("/taskr ", "")
-                .replace("@" + assigneeName, "");
+                .replace("@" + assigneeName, "")
+                .replace("p:" + priority, "");
 
         List<LocalDateTime> dueDates;
         if(recurring){
@@ -80,6 +85,7 @@ public class TodoService {
                     message.getStreamId(),
                     message.getStream().getStreamType() == SymStreamTypes.Type.ROOM ? symClient.getStreamsClient().getRoomDetail(message.getStreamId()).getRoomAttributes().getName() : "Personal",
                     due,
+                    priority,
                     labels
             );
             save(todo);
@@ -87,6 +93,14 @@ public class TodoService {
         }
 
         return result;
+    }
+
+    private int getPriority(String messageText, int defaultValue) {
+        Matcher matcher = priorityPattern.matcher(messageText);
+        if(matcher.matches()){
+            return Integer.parseInt(matcher.group(1));
+        }
+        return defaultValue;
     }
 
     public void save(Todo todo){
@@ -116,6 +130,105 @@ public class TodoService {
     public List<Todo> filtered(Predicate<Todo> predicate){
         return todos.values().stream().filter(predicate).collect(Collectors.toList());
     }
+
+    public Todo assignTask(SymMessage message) {
+        long id = getTaskIdFromMessage(message.getMessageText());
+        Todo todo = todos.get(id);
+        Optional<SymUser> assignee = getAssignee(message);
+        if(!assignee.isPresent()){
+            return null;
+        }
+
+        SymUser symUser = assignee.get();
+        todo.assigneeName = symUser.getDisplayName();
+        todo.assigneeId = symUser.getId();
+        save(todo);
+        return todo;
+    }
+    public Todo startTask(SymMessage message) {
+        long id = getTaskIdFromMessage(message.getMessageText());
+        Todo todo = todos.get(id);
+        if(todo.status ==Status.WIP){
+            return null;
+        }
+        Optional<SymUser> assignee = getAssignee(message);
+        if(!assignee.isPresent()){
+            if(todo.assigneeId == null){
+                todo.assigneeId = message.getSymUser().getId();
+                todo.assigneeName = message.getSymUser().getDisplayName();
+            }
+        } else {
+            SymUser symUser = assignee.get();
+            todo.assigneeName = symUser.getDisplayName();
+            todo.assigneeId = symUser.getId();
+        }
+        todo.status = Status.WIP;
+        save(todo);
+        return todo;
+    }
+    public Todo completeTask(SymMessage message) {
+        long id = getTaskIdFromMessage(message.getMessageText());
+        Todo todo = todos.get(id);
+        if(todo.status ==Status.DONE){
+            return null;
+        }
+        todo.status = Status.DONE;
+        save(todo);
+        return todo;
+    }
+
+    public long getTaskIdFromMessage(String message){
+        Matcher matcher = taskIdPattern.matcher(message);
+        matcher.matches();
+        String id = matcher.group(1);
+        return Long.parseLong(id);
+    }
+
+    public Todo editTask(SymMessage message) {
+
+        long id = getTaskIdFromMessage(message.getMessageText());
+        String messageText = message.getMessageText().replaceFirst("/task-edit (TODO-|TASK-)?\\d+", "");
+        Todo oldTodo = todos.get(id);
+        Optional<SymUser> assignee = getAssignee(message);
+        String assigneeName = assignee.map(SymUser::getDisplayName).orElse(oldTodo.assigneeName);
+        Long assigneeId = assignee.map(SymUser::getId).orElse(oldTodo.assigneeId);
+        List<String> labels = getLabels(messageText);
+        if(labels.size() == 0){
+            labels = oldTodo.labels;
+        }
+        int priority = getPriority(messageText, oldTodo.priority);
+        for(String label : labels){
+            messageText = messageText.replace("#" + label,"");
+        }
+        String summary = messageText
+                .replace("@" + assigneeName, "")
+                .replace("p:" + priority, "");
+        if(summary.trim().isEmpty()){
+            summary = oldTodo.summary;
+        }
+
+        LocalDateTime due = getDueDate(messageText);
+
+        if(due == null){
+            due = oldTodo.due;
+        }
+        Todo todo = new Todo(
+                id,
+                summary,
+                oldTodo.creatorName,
+                oldTodo.creatorId,
+                assigneeName,
+                assigneeId,
+                oldTodo.roomId,
+                oldTodo.roomName,
+                due,
+                priority,
+                labels);
+        save(todo);
+
+        return todo;
+    }
+
 
     public static class DueDateMatch {
         public LocalDateTime due;
