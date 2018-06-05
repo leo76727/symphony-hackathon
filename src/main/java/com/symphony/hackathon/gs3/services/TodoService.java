@@ -33,13 +33,15 @@ public class TodoService {
     private final AtomicLong idGenerator = new AtomicLong(1);
 
     private SymphonyClient symClient;
+    private ActorService actorService;
     private Map<Long, Todo> todos;
     private TodoRepo repo = new TodoRepo();
-    Pattern taskIdPattern = Pattern.compile("\\s*#\\S+\\s(?:(?:TODO|TASK)-)?(\\d+).*", Pattern.CASE_INSENSITIVE);
+    Pattern taskIdPattern = Pattern.compile("\\s*\\#\\S+\\s(?:(?:TODO|TASK)-)?(\\d+).*", Pattern.CASE_INSENSITIVE);
     Pattern priorityPattern = Pattern.compile(".*p:([123]).*", Pattern.CASE_INSENSITIVE);
 
-    public TodoService(SymphonyClient symClient){
+    public TodoService(SymphonyClient symClient, ActorService actorService){
         this.symClient = symClient;
+        this.actorService = actorService;
         todos = repo.loadAll();
         idGenerator.set(todos.keySet().stream().mapToLong(l->l).max().orElse(0) + 1 );
     }
@@ -117,6 +119,14 @@ public class TodoService {
     }
 
     private Optional<SymUser> getAssignee(SymMessage message) {
+        String autoActor = findAutoActorAssignee(message.getMessageText());
+        if(autoActor != null){
+            SymUser user = new SymUser();
+            user.setId(message.getSymUser().getId());
+            user.setDisplayName(autoActor);
+            return Optional.of(user);
+        }
+
         if(message.getStream().getStreamType() != SymStreamTypes.Type.ROOM){
             return Optional.of(message.getSymUser());
         }
@@ -125,6 +135,18 @@ public class TodoService {
             return Optional.of(mentions.get(0));
         }
         return Optional.empty();
+    }
+
+    private String findAutoActorAssignee(String messageText) {
+        Pattern pattern = Pattern.compile(".*@(\\S+).*");
+        Matcher match = pattern.matcher(messageText);
+        if(match.matches()){
+            String actor =  match.group(1);
+            if(this.actorService.actors.keySet().contains(actor)){
+                return actor;
+            }
+        }
+        return null;
     }
 
     public List<Todo> getForRoom(String roomId) {

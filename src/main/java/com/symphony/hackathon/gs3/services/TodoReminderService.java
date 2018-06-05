@@ -48,7 +48,7 @@ public class TodoReminderService {
                 logger.error("Failed to send batch of reminders, will retry", e);
             }
 
-        }, 0, 1, TimeUnit.MINUTES);
+        }, 0, 10, TimeUnit.SECONDS);
     }
 
     private void sendReminder(Todo todo) throws Exception {

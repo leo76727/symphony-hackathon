@@ -1,10 +1,12 @@
 package com.symphony.hackathon.gs3.bot;
 
 import com.symphony.hackathon.gs3.TodoBotConfiguration;
+import com.symphony.hackathon.gs3.model.Actor;
 import com.symphony.hackathon.gs3.model.Todo;
 import com.symphony.hackathon.gs3.model.views.TodoEntityWrapper;
 import com.symphony.hackathon.gs3.model.views.TodoListByRoomEntityWrapper;
 import com.symphony.hackathon.gs3.model.views.TodoListEntityWrapper;
+import com.symphony.hackathon.gs3.services.ActorService;
 import com.symphony.hackathon.gs3.services.SymphonyToDoMessengeSender;
 import com.symphony.hackathon.gs3.services.TodoReminderService;
 import com.symphony.hackathon.gs3.services.TodoService;
@@ -18,6 +20,7 @@ import org.symphonyoss.client.services.*;
 import org.symphonyoss.symphony.clients.model.SymMessage;
 import org.symphonyoss.symphony.clients.model.SymStreamTypes;
 
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
@@ -31,14 +34,20 @@ public class TodoBot implements ChatListener, ChatServiceListener, RoomServiceEv
     private TodoService todoService;
     private SymphonyToDoMessengeSender messageSender;
     private TodoBotConfiguration config;
+    private ActorService actorService;
 
     protected TodoBot(SymphonyClient symClient, TodoBotConfiguration config) {
         this.symClient = symClient;
         this.config = config;
-        this.todoService = new TodoService(symClient);
+        this.actorService = new ActorService();
+        this.todoService = new TodoService(symClient, actorService);
         this.messageSender = new SymphonyToDoMessengeSender(this.symClient);
         this.reminderService = new TodoReminderService(this.symClient, this.todoService, this.messageSender);
         this.reminderService.start();
+        this.actorService.setTodoService(this.todoService);
+        this.actorService.setMessageSender(this.messageSender);
+        this.actorService.setSymphonyClient(this.symClient);
+        this.actorService.start();
         init();
     }
 
@@ -140,6 +149,16 @@ public class TodoBot implements ChatListener, ChatServiceListener, RoomServiceEv
                         this.messageSender.sendEntityMessage(message.getStreamId(), new TodoListByRoomEntityWrapper(tasks), SymphonyToDoMessengeSender.TASK_LIST_BY_ROOM_TEMPLATE);
                     }
                 }
+            }
+            if (messageText.startsWith("#task-add-actor")) {
+                Actor actor = actorService.addActor(messageText.replaceFirst("#task-add-actor", "").trim());
+                this.messageSender.sendMessage(message.getStreamId(), String.format("Added actor %s: %s", actor.actorName, actor.url));
+            }
+            if (messageText.startsWith("#task-list-actors")) {
+                Collection<Actor> actors = actorService.getActors();
+                StringBuilder sb = new StringBuilder("Actors: <br />");
+                actors.forEach(a ->sb.append(String.format("%s: %s<br />", a.actorName, a.url)));
+                this.messageSender.sendMessage(message.getStreamId(), sb.toString());
             }
         } catch (Exception e) {
             logger.error("Failed to send message", e);

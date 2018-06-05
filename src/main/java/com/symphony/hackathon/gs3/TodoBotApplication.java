@@ -3,6 +3,7 @@ package com.symphony.hackathon.gs3;
 import com.symphony.hackathon.gs3.bot.TodoBot;
 import com.symphony.hackathon.gs3.symphony.utils.SymphonyAuth;
 import io.dropwizard.Application;
+import io.dropwizard.assets.AssetsBundle;
 import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
 import io.dropwizard.configuration.SubstitutingSourceProvider;
 import io.dropwizard.setup.Bootstrap;
@@ -36,7 +37,6 @@ public class TodoBotApplication extends Application<TodoBotConfiguration> {
                 )
         );
 
-
     }
 
     @Override
@@ -55,5 +55,6 @@ public class TodoBotApplication extends Application<TodoBotConfiguration> {
 
         SymphonyClient symClient = new SymphonyAuth().init(configuration);
         TodoBot bot = TodoBot.getInstance(symClient,configuration);
+
     }
 }
