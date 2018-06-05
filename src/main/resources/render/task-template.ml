@@ -1,6 +1,6 @@
 <messageML>
     <div class="entity" data-entity-id="todo">
-        <card class="barStyle" iconSrc="https://cdn.iconscout.com/public/images/icon/free/png-128/task-359bc93b6d7990cd-128x128.png">
+        <card class="barStyle" iconSrc="https://cdn.rawgit.com/paulcreasey/symphony-hackathon/392456a9/src/main/resources/logo.png">
 			<div>
 			    <#if (entity['todo'].priority)=1>
                 <img src="https://jira.atlassian.com/images/icons/priorities/highest.svg" class="icon"/>

@@ -14,6 +14,7 @@ import org.symphonyoss.symphony.clients.model.SymMessage;
 import org.symphonyoss.symphony.clients.model.SymStream;
 import org.symphonyoss.symphony.pod.model.Stream;
 
+import java.io.File;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
 
@@ -42,6 +43,13 @@ public class SymphonyToDoMessengeSender {
         SymMessage message = new SymMessage();
 
         message.setMessage(String.format("<messageML>%s</messageML>", text));
+        symClient.getMessagesClient().sendMessage(new Stream().id(streamId), message);
+    }
+    public void sendMessage(String streamId, String text, File file) throws Exception {
+        SymMessage message = new SymMessage();
+
+        message.setMessage(String.format("<messageML>%s</messageML>", text));
+        message.setAttachment(file);
         symClient.getMessagesClient().sendMessage(new Stream().id(streamId), message);
     }
 }

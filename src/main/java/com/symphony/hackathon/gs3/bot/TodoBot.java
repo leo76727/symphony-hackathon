@@ -10,6 +10,11 @@ import com.symphony.hackathon.gs3.services.ActorService;
 import com.symphony.hackathon.gs3.services.SymphonyToDoMessengeSender;
 import com.symphony.hackathon.gs3.services.TodoReminderService;
 import com.symphony.hackathon.gs3.services.TodoService;
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartUtilities;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.data.category.DefaultCategoryDataset;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.symphonyoss.client.SymphonyClient;
@@ -20,9 +25,9 @@ import org.symphonyoss.client.services.*;
 import org.symphonyoss.symphony.clients.model.SymMessage;
 import org.symphonyoss.symphony.clients.model.SymStreamTypes;
 
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.util.*;
 
 public class TodoBot implements ChatListener, ChatServiceListener, RoomServiceEventListener, RoomEventListener {
 
@@ -84,7 +89,7 @@ public class TodoBot implements ChatListener, ChatServiceListener, RoomServiceEv
             if (messageText.contains("hi todo bot")) {
                 this.messageSender.sendMessage(message.getStreamId(), "Hello");
             }
-            if (messageText.startsWith("/help")) {
+            if (messageText.startsWith("#help")) {
                 if(message.getStream().getStreamType() == SymStreamTypes.Type.ROOM){
                     this.messageSender.sendMessage(message.getStreamId(),"I've responded to you in private");
                     this.messageSender.sendMessage(this.symClient.getStreamsClient().getStream(message.getSymUser()).getStreamId(), usage());
@@ -159,6 +164,27 @@ public class TodoBot implements ChatListener, ChatServiceListener, RoomServiceEv
                 StringBuilder sb = new StringBuilder("Actors: <br />");
                 actors.forEach(a ->sb.append(String.format("%s: %s<br />", a.actorName, a.url)));
                 this.messageSender.sendMessage(message.getStreamId(), sb.toString());
+            }
+            if (messageText.startsWith("#task-stats")) {
+                String roomId = message.getStream().getStreamType() == SymStreamTypes.Type.ROOM ? message.getStreamId() : "";
+                Map<String, Long> tasksundone = todoService.getCountOfOpenTasksByAssignee(roomId);
+                Map<String, Long> tasksdone = todoService.getCountOfClosedTasksByAssignee(roomId);
+
+                DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+                Set<String> users = new HashSet<>();
+                users.addAll(tasksdone.keySet());
+                users.addAll(tasksundone.keySet());
+
+                users.forEach(u -> {
+                    dataset.addValue(tasksundone.getOrDefault(u, 0L),"Unfinished", u);
+                    dataset.addValue(tasksdone.getOrDefault(u, 0L),"Finished", u);
+                });
+
+                JFreeChart chart = ChartFactory.createBarChart("Daily Work Stats Summary", "Assignee", "Number", dataset, PlotOrientation.HORIZONTAL, true, false, false);
+                File file = new File("target/Daily Stats.png");
+                FileOutputStream fos = new FileOutputStream(file);
+                ChartUtilities.writeChartAsPNG(fos, chart, 1000, 1000);
+                this.messageSender.sendMessage(message.getStreamId(), "Daily Stats", file);
             }
         } catch (Exception e) {
             logger.error("Failed to send message", e);

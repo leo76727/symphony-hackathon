@@ -335,4 +335,22 @@ public class TodoService {
         return result;
     }
 
+    public Map<String, Long> getCountOfOpenTasksByAssignee(String roomId){
+        Map<String, Long> countByUser = filtered(t->t.status != Status.DONE)
+                .stream()
+                .filter(t->roomId.isEmpty() || t.roomId.equals(roomId))
+                .map(t -> t.assigneeName)
+                .collect(groupingBy(Function.identity(), Collectors.counting()));
+        return countByUser;
+    }
+
+    public Map<String, Long> getCountOfClosedTasksByAssignee(String roomId){
+        Map<String, Long> countByUser = filtered(t->t.status == Status.DONE)
+                .stream()
+                .filter(t->roomId.isEmpty() || t.roomId.equals(roomId))
+                .map(t -> t.assigneeName)
+                .collect(groupingBy(Function.identity(), Collectors.counting()));
+        return countByUser;
+    }
+
 }
