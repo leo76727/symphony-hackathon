@@ -84,46 +84,46 @@ public class TodoBot implements ChatListener, ChatServiceListener, RoomServiceEv
                 }
 
             }
-            if (messageText.startsWith("/task ")) {
+            if (messageText.startsWith("#task ")) {
                 Todo task = todoService.createTask(message);
 
                 this.messageSender.sendEntityMessage(task.roomId, new TodoEntityWrapper(task, "Created"), SymphonyToDoMessengeSender.TASK_TEMPLATE);
             }
-            if (messageText.startsWith("/taskr ")) {
+            if (messageText.startsWith("#taskr ")) {
                 List<Todo> tasks = todoService.createTasks(message);
                 for(Todo task : tasks){
                     this.messageSender.sendEntityMessage(task.roomId, new TodoEntityWrapper(task, "Created!"), SymphonyToDoMessengeSender.TASK_TEMPLATE);
                 }
             }
-            if (messageText.startsWith("/task-assign ")) {
+            if (messageText.startsWith("#task-assign ")) {
                 Todo task = todoService.assignTask(message);
                 if(task != null){
                     this.messageSender.sendEntityMessage(message.getStreamId(), new TodoEntityWrapper(task, "Assigned!"), SymphonyToDoMessengeSender.TASK_TEMPLATE);
                 }
             }
-            if (messageText.startsWith("/task-start ")) {
+            if (messageText.startsWith("#task-start ")) {
                 Todo task = todoService.startTask(message);
                 if(task != null){
                     this.messageSender.sendEntityMessage(message.getStreamId(), new TodoEntityWrapper(task, "Started!"), SymphonyToDoMessengeSender.TASK_TEMPLATE);
                 }
             }
 
-            if (messageText.startsWith("/task-done ")) {
+            if (messageText.startsWith("#task-done ")) {
                 Todo task = todoService.completeTask(message);
                 if(task != null){
                     this.messageSender.sendEntityMessage(message.getStreamId(), new TodoEntityWrapper(task, "Done!"), SymphonyToDoMessengeSender.TASK_TEMPLATE);
                 }
             }
-            if (messageText.startsWith("/task-edit ")) {
+            if (messageText.startsWith("#task-edit ")) {
                 Todo task = todoService.editTask(message);
                 if(task != null){
                     this.messageSender.sendEntityMessage(message.getStreamId(), new TodoEntityWrapper(task, "Edited!"), SymphonyToDoMessengeSender.TASK_TEMPLATE);
                 }
             }
-            if (messageText.startsWith("/test ")) {
+            if (messageText.startsWith("#test ")) {
                 this.messageSender.sendEntityMessage(message.getStreamId(), new ExampleTimerEntity(), "<messageML><div class=\"entity\" data-entity-id=\"timer\"><b><i>Please install the Hello World application to render this entity.</i></b></div></messageML>");
             }
-            if (messageText.startsWith("/tasks")) {
+            if (messageText.startsWith("#tasks")) {
                 List<Todo> tasks;
                 if(message.getStream().getStreamType() == SymStreamTypes.Type.ROOM){
                     tasks = todoService.getForRoom(message.getStreamId());
@@ -189,32 +189,32 @@ public class TodoBot implements ChatListener, ChatServiceListener, RoomServiceEv
                 "Add labels using #hashtag, set priority with p:1 (1, 2 or 3), assign it with @user mention<br />" +
                 "<br />" +
                 "Create a task:<br />" +
-                "/task summary <br />" +
-                "/task summary #label1 #label2 @Assignee <br />" +
-                "/task summary at Thursday #label1 #label2 @Assignee <br />" +
-                "/task summary at June 14th #label1 #label2 @Assignee <br />" +
+                "#task summary <br />" +
+                "#task summary #label1 #label2 @Assignee <br />" +
+                "#task summary at Thursday #label1 #label2 @Assignee <br />" +
+                "#task summary at June 14th #label1 #label2 @Assignee <br />" +
                 "<br />" +
                 "Create a recurring task:<br />" +
-                "/taskr summary every date expression until limit<br />" +
-                "/taskr submit timesheet every friday at 4PM until 1 month<br />" +
+                "#taskr summary every date expression until limit<br />" +
+                "#taskr submit timesheet every friday at 4PM until 1 month<br />" +
                 "<br />" +
                 "List tasks (all tasks for the current room or all tasks assigned to you via a direct message):<br />" +
-                "/tasks<br />" +
+                "#tasks<br />" +
                 "<br />" +
                 "Start a task, moving the state to WIP and assigning to you if it's currently unassigned:<br />" +
-                "/task-start TODO-1<br />" +
+                "#task-start TODO-1<br />" +
                 "<br />" +
                 "Complete a task, moving it to the done state.<br />" +
-                "/task-complete TODO-1<br />" +
+                "#task-complete TODO-1<br />" +
                 "<br />" +
                 "Assign a task:<br />" +
-                "/task-assign TODO-1 @John Doe<br />" +
+                "#task-assign TODO-1 @John Doe<br />" +
                 "<br />" +
                 "Edit a task:<br />" +
-                "/task-edit Works exactly like create task, but replaces it.<br />" +
+                "#task-edit Works exactly like create task, but replaces it.<br />" +
                 "<br />" +
                 "Display this message:<br />" +
-                "/help<br />";
+                "#help<br />";
     }
 
     @Override
